@@ -34,6 +34,7 @@
 #include "pongo.h"
 #include "tz.h"
 
+
 static bool gHaveTZ1 = false;
 static volatile uint32_t *gTZRegbase[2];
 
@@ -64,6 +65,16 @@ static bool tz_get_raw(uint8_t which, uint8_t slot, uint8_t *shift, uint32_t *st
     uint8_t idx;
     if(!tz_idx_shift(which, &idx, shift))
     {
+
+        return false;
+    }
+
+    volatile uint32_t *reg = gTZRegbase[slot];
+    if(!reg)
+    {
+        return false;
+    }
+
     if(socnum == 0x8960)
     {
         uint32_t val = reg[idx];
@@ -236,6 +247,7 @@ bool tz_blackbird(void)
 uint64_t tz0_calculate_encrypted_block_offset(uint64_t offset)
 {
     switch(socnum)
+
     {
         case 0x8960:
             return offset & ~0xfULL;
@@ -313,6 +325,7 @@ static void tz_cmd_lock(const char *cmd, char *args)
     }
     else if(strcmp(args, "0") == 0)
     {
+
         lock0 = true;
     }
     else if(strcmp(args, "1") == 0)
@@ -346,7 +359,9 @@ static void tz_cmd_lock(const char *cmd, char *args)
         {
             iprintf("Failed to lock TZ1.\n");
         }
+
     }
+    iprintf("tz set usage: tz set [zone] [base] [size]\n");
 }
 
 static void tz_cmd_set(const char *cmd, char *args)
@@ -384,6 +399,7 @@ static void tz_cmd_set(const char *cmd, char *args)
     iprintf("tz set usage: tz set [zone] [base] [size]\n");
 }
 
+
 static void tz_cmd_set_legacy(const char *cmd, char *args)
 {
     char *reg0 = command_tokenize(args, 0x1ff - (args - cmd));
@@ -419,6 +435,7 @@ static void tz_cmd_blackbird(const char *cmd, char *args)
         return;
     }
     if(tz_locked(0))
+
     {
         iprintf("TZ0 is already locked.\n");
         return;
@@ -480,6 +497,8 @@ void tz_setup(void)
         default:
             panic("Unsupported SoC");
     }
+
+    
 
     command_register("tz", "trustzone management", tz_cmd);
     // Keep these for legacy compat, but hide them from help
